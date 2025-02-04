@@ -1,0 +1,415 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+  users             users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model ActivateToken {
+  id          Int       @id @default(autoincrement())
+  token       String    @unique
+  createdAt   DateTime  @default(now())
+  activatedAt DateTime?
+  userId      String
+  users       users     @relation(fields: [userId], references: [id])
+}
+
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  users                users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  users        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model StoreToStoreCategory {
+  A               Int
+  B               Int
+  stores          stores          @relation(fields: [A], references: [id], onDelete: Cascade)
+  storecategories storecategories @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@unique([A, B], map: "_StoreToStoreCategory_AB_unique")
+  @@index([B], map: "_StoreToStoreCategory_B_index")
+  @@map("_StoreToStoreCategory")
+}
+
+model directories {
+  id        Int                 @id @default(autoincrement())
+  title     String
+  slug      String              @unique
+  status    DirectoryStatusType @default(publish)
+  sections  Json?
+  fields    Json?
+  settings  Json?
+  isDefault Boolean             @default(false)
+  createdBy String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime
+  users     users               @relation(fields: [createdBy], references: [id])
+}
+
+model errorLogs {
+  id        Int      @id @default(autoincrement())
+  message   String
+  stack     String?
+  location  String?
+  createdAt DateTime @default(now())
+}
+
+model listingMeta {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  key       String
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  listings  listings @relation(fields: [listingId], references: [id])
+}
+
+model listingcategories {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique @db.VarChar(50)
+  slug        String   @unique @db.VarChar(50)
+  description String?
+  parent      String?
+  order       Int?     @default(0)
+  count       Int?     @default(0)
+  price_unit  String[] @default([])
+  map_icon    String?
+  image       String?
+  icon        String?
+  createdAt   DateTime @default(now())
+}
+
+model listinglocations {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique @db.VarChar(50)
+  slug        String   @unique @db.VarChar(50)
+  description String?
+  parent      String?
+  order       Int?     @default(0)
+  count       Int?     @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model listings {
+  id           Int           @id @default(autoincrement())
+  title        String
+  slug         String        @unique
+  content      String?
+  excerpt      String?
+  authorId     String
+  parentId     String?
+  order        Int           @default(0)
+  commentCount Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime
+  listingMeta  listingMeta[]
+  users        users         @relation(fields: [authorId], references: [id])
+}
+
+model listingtags {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique @db.VarChar(50)
+  slug        String   @unique @db.VarChar(50)
+  description String?
+  count       Int?     @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model listingtypes {
+  id        Int      @id @default(autoincrement())
+  title     String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(50)
+  createdAt DateTime @default(now())
+}
+
+model medias {
+  id          Int         @id @default(autoincrement())
+  parent_id   Int
+  parent_type ParentType?
+  mime_type   String?
+  name        String?
+  caption     String?
+  description String?
+  meta_data   String?
+  isFeatured  Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+}
+
+model pages {
+  id             Int              @id @default(autoincrement())
+  title          String           @unique @db.VarChar(50)
+  description    String?
+  slug           String           @unique @db.VarChar(50)
+  status         String           @default("unpublished")
+  tags           String[]         @default([])
+  order_type     Int?
+  type           PostType         @default(POST)
+  userId         String
+  featuredImgId  Int?
+  mediaIds       Int[]            @default([])
+  createdAt      DateTime         @default(now())
+  users          users            @relation(fields: [userId], references: [id])
+  postcategories postcategories[] @relation("PostToPostCategory")
+}
+
+model permissions {
+  id               Int                @id @default(autoincrement())
+  title            String             @unique @db.VarChar(50)
+  slug             String             @unique @db.VarChar(50)
+  description      String?
+  roleToPermission roleToPermission[]
+}
+
+model postcategories {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique @db.VarChar(50)
+  description String?
+  slug        String   @unique @db.VarChar(50)
+  parent      String?
+  count       Int?     @default(0)
+  createdAt   DateTime @default(now())
+  pages       pages[]  @relation("PostToPostCategory")
+}
+
+model profiles {
+  id        String   @id
+  email     String   @unique
+  gender    String?
+  whatsapp  String?
+  website   String?
+  state     String?
+  zip       Int?
+  address   String?
+  facebook  String?
+  twitter   String?
+  youtube   String?
+  instagram String?
+  linkedin  String?
+  pinterest String?
+  reddit    String?
+  tiktok    String?
+  userId    String?  @unique
+  meta      Json?
+  createdAt DateTime @default(now())
+  updateAt  DateTime
+  users     users?   @relation(fields: [userId], references: [id])
+}
+
+model roleToPermission {
+  roleSlug       String
+  permissionSlug String
+  permissions    permissions @relation(fields: [permissionSlug], references: [slug])
+  roles          roles       @relation(fields: [roleSlug], references: [slug])
+
+  @@unique([roleSlug, permissionSlug])
+}
+
+model roles {
+  id               Int                @id @default(autoincrement())
+  title            String             @unique @db.VarChar(50)
+  slug             String             @unique @db.VarChar(50)
+  desciption       String?
+  active           Boolean            @default(true)
+  roleToPermission roleToPermission[]
+  users            users[]
+}
+
+model settings {
+  id    Int     @id @default(autoincrement())
+  key   String
+  group String
+  type  String
+  value String?
+
+  @@unique([key, group, type])
+}
+
+model storecategories {
+  id                   Int                    @id @default(autoincrement())
+  title                String                 @unique @db.VarChar(50)
+  description          String?
+  slug                 String                 @unique @db.VarChar(50)
+  parent               String?
+  order                Int?
+  count                Int?                   @default(0)
+  createdAt            DateTime               @default(now())
+  StoreToStoreCategory StoreToStoreCategory[]
+}
+
+model stores {
+  id                   Int                    @id @default(autoincrement())
+  title                String                 @unique @db.VarChar(50)
+  description          String?
+  owner                String
+  status               String                 @default("unpublished")
+  banner               String?
+  logo                 String?
+  businessHrsEnable    Boolean                @default(false)
+  specialHrsEnable     Boolean                @default(false)
+  opening_hours        String?
+  business_hours       Json?
+  special_hours        Json?
+  slogan               String?
+  email                String?
+  phone                String?
+  whatsapp             String?
+  website              String?
+  address              String?
+  social_profile       String?
+  createdAt            DateTime               @default(now())
+  StoreToStoreCategory StoreToStoreCategory[]
+  users                users                  @relation(fields: [owner], references: [id])
+}
+
+model tags {
+  id          Int      @id @default(autoincrement())
+  title       String   @unique @db.VarChar(50)
+  description String?
+  slug        String   @unique @db.VarChar(50)
+  count       Int?     @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model users {
+  id              String          @id
+  name            String?
+  email           String          @unique
+  password        String?
+  phone           String?         @unique
+  roleSlug        String          @default("subscriber")
+  emailActive     Boolean         @default(false)
+  emailVerifiedAt DateTime?
+  phoneActive     Boolean         @default(false)
+  phoneVerifiedAt DateTime?
+  active          Boolean         @default(false)
+  image           String?
+  emailVerified   DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  Account         Account[]
+  ActivateToken   ActivateToken[]
+  Authenticator   Authenticator[]
+  Session         Session[]
+  directories     directories[]
+  listings        listings[]
+  pages           pages[]
+  profiles        profiles?
+  stores          stores[]
+  roles           roles           @relation(fields: [roleSlug], references: [slug])
+}
+
+enum DirectoryStatusType {
+  publish
+  draft
+}
+
+enum ParentType {
+  STORE
+  POST
+  PAGE
+  LISTING
+  STORELOGO
+  STOREBANNER
+}
+
+enum PostType {
+  PAGE
+  POST
+}
+
+// ----------------------------- testing ----------------
+enum BookStatus {
+  draft
+  published
+  archived
+}
+
+model Book {
+  id          String     @id @default(uuid())
+  title       String     @db.VarChar(255)
+  publisher   Publisher? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+  publisherId String?    @map("publisher_id") @db.Uuid
+  author      PrismaUser @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String     @map("author_id") @db.Uuid
+  summary     String     @db.Text
+  status      BookStatus @default(draft)
+  pages       Int
+  genre       BookGenre? @relation(fields: [genreId], references: [id], onDelete: SetNull)
+  genreId     String?    @map("genre_id") @db.Uuid
+  publishedAt DateTime   @map("published_at") @db.Timestamptz
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @default(now()) @map("updated_at") @db.Timestamptz
+
+  @@map("books")
+}
+
+// Referenced models needed for relations
+model Publisher {
+  id    String @id @default(uuid())
+  books Book[]
+  // other fields...
+
+  @@map("publishers")
+}
+
+model PrismaUser {
+  id    String @id @default(uuid())
+  books Book[]
+  // other fields...
+
+  @@map("prisma_users")
+}
+
+model BookGenre {
+  id    String @id @default(uuid())
+  books Book[]
+  // other fields...
+
+  @@map("book_genres")
+}
