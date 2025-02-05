@@ -1,9 +1,11 @@
+import {  BookRoutes } from '@/routers/book.route';
 import express from 'express';
 // import authRouter from '@/routers/auth.routes';
 // import genreRouter from '@/routers/genre.routes';
 // import publisherRouter from '@/routers/publishers';
 // import userRouter from '@/routers/user.routes';
-import bookRouter from '@/routers/book.route';
+
+import healthRoutes from '@/routers/health.route';
 
 
 const app = express();
@@ -16,8 +18,9 @@ app.use(express.json());
 // app.use('/api/genres', genreRouter);
 // app.use('/api/publishers', publisherRouter);
 // app.use('/api/users', userRouter);
-app.use('/api/books', bookRouter);
-
+const bookRoutes = new BookRoutes();
+app.use('/api/books', bookRoutes.router);
+app.use('/api', healthRoutes);
 
 
 // Error handling middleware

@@ -391,7 +391,8 @@ model Book {
 
 // Referenced models needed for relations
 model Publisher {
-  id    String @id @default(uuid())
+  id    String @id @default(uuid()) @db.Uuid
+  title String
   books Book[]
   // other fields...
 
@@ -399,7 +400,9 @@ model Publisher {
 }
 
 model PrismaUser {
-  id    String @id @default(uuid())
+  id    String @id @default(uuid()) @db.Uuid
+  name  String
+  status Boolean
   books Book[]
   // other fields...
 
@@ -407,7 +410,8 @@ model PrismaUser {
 }
 
 model BookGenre {
-  id    String @id @default(uuid())
+  id    String @id @default(uuid()) @db.Uuid
+  title String
   books Book[]
   // other fields...
 
